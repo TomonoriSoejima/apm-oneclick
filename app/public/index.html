@@ -3,188 +3,336 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>APM Test UI</title>
+    <title>APM Flow Console</title>
     <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         margin: 0;
-        background: #f8fafc;
-        color: #0f172a;
-      }
-      .container {
-        max-width: 920px;
-        margin: 0 auto;
-        padding: 2rem 1.25rem 2.5rem;
-      }
-      .hero {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
+        min-height: 100vh;
         color: #e2e8f0;
-        border-radius: 16px;
-        padding: 1.25rem 1.3rem;
-        margin-bottom: 1rem;
+        background:
+          radial-gradient(1200px 600px at 5% -5%, rgba(56, 189, 248, 0.25), transparent 60%),
+          radial-gradient(900px 500px at 100% 0%, rgba(139, 92, 246, 0.2), transparent 55%),
+          linear-gradient(165deg, #050816 0%, #0b1022 45%, #101935 100%);
       }
+
+      .container {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2rem 1.2rem 2.2rem;
+      }
+
+      .hero {
+        border-radius: 22px;
+        padding: 1.35rem 1.4rem;
+        margin-bottom: 1.15rem;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.78), rgba(30, 41, 59, 0.58));
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 20px 50px rgba(2, 6, 23, 0.45);
+      }
+
       h1 {
         margin: 0 0 0.4rem;
-        font-size: 1.55rem;
+        font-size: 1.45rem;
+        letter-spacing: 0.2px;
       }
+
       .sub {
-        color: #cbd5e1;
+        color: #bfdbfe;
         margin: 0;
         font-size: 0.95rem;
       }
+
+      .layout {
+        display: grid;
+        gap: 0.95rem;
+        grid-template-columns: 1.35fr 0.95fr;
+      }
+
       .steps {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 0.85rem;
+        gap: 0.95rem;
       }
+
       .step {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 1rem;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+        border-radius: 18px;
+        padding: 1rem 1rem 1.05rem;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.5));
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 18px 40px rgba(2, 6, 23, 0.35);
+        backdrop-filter: blur(6px);
       }
+
       .step h2 {
         margin: 0;
-        font-size: 1rem;
+        font-size: 0.98rem;
+        color: #e2e8f0;
         display: flex;
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.52rem;
       }
+
       .step-num {
         display: inline-flex;
-        width: 1.45rem;
-        height: 1.45rem;
+        width: 1.55rem;
+        height: 1.55rem;
         border-radius: 999px;
         align-items: center;
         justify-content: center;
-        background: #dbeafe;
-        color: #1d4ed8;
+        background: linear-gradient(145deg, rgba(14, 165, 233, 0.26), rgba(59, 130, 246, 0.32));
+        color: #dbeafe;
+        border: 1px solid rgba(125, 211, 252, 0.42);
         font-weight: 700;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
       }
+
       .row {
         display: flex;
         gap: 0.6rem;
         align-items: center;
-        margin-top: 0.5rem;
+        margin-top: 0.64rem;
         flex-wrap: wrap;
       }
+
       input,
       select {
-        padding: 0.5rem 0.6rem;
+        padding: 0.56rem 0.66rem;
         min-width: 150px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid rgba(148, 163, 184, 0.35);
         border-radius: 10px;
-        background: #fff;
-        color: #0f172a;
+        background: rgba(15, 23, 42, 0.58);
+        color: #e2e8f0;
+        outline: none;
       }
+
+      input:focus,
+      select:focus {
+        border-color: rgba(96, 165, 250, 0.72);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+      }
+
       .wide {
         width: 100%;
       }
+
       .pill {
         display: inline-block;
-        border: 1px solid #bfdbfe;
+        border: 1px solid rgba(125, 211, 252, 0.36);
         border-radius: 999px;
-        padding: 0.28rem 0.75rem;
-        font-size: 0.85rem;
-        background: #eff6ff;
-        color: #1e3a8a;
+        padding: 0.3rem 0.74rem;
+        font-size: 0.82rem;
+        background: rgba(14, 165, 233, 0.14);
+        color: #bae6fd;
       }
+
       button {
-        padding: 0.52rem 0.9rem;
-        border: 1px solid #cbd5e1;
-        background: #fff;
+        padding: 0.54rem 0.9rem;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.65);
+        color: #e2e8f0;
         border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
+        transition: 120ms ease;
       }
+
       button:hover {
-        background: #f1f5f9;
+        transform: translateY(-1px);
+        border-color: rgba(147, 197, 253, 0.7);
+        background: rgba(30, 41, 59, 0.85);
       }
+
       button.primary {
-        background: #1d4ed8;
-        border-color: #1d4ed8;
+        background: linear-gradient(145deg, rgba(37, 99, 235, 0.95), rgba(79, 70, 229, 0.95));
+        border-color: rgba(147, 197, 253, 0.55);
         color: #fff;
       }
+
       button.primary:hover {
-        background: #1e40af;
+        background: linear-gradient(145deg, rgba(30, 64, 175, 0.95), rgba(67, 56, 202, 0.95));
       }
+
       button:disabled {
         opacity: 0.55;
         cursor: not-allowed;
       }
+
+      .status-grid {
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      .stat {
+        padding: 0.78rem 0.84rem;
+        border-radius: 14px;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.55));
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .stat-label {
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #93c5fd;
+        margin-bottom: 0.26rem;
+      }
+
+      .stat-value {
+        font-size: 0.88rem;
+        color: #e2e8f0;
+        word-break: break-word;
+      }
+
       pre {
-        background: #0f172a;
-        color: #dbeafe;
-        padding: 0.75rem;
-        border-radius: 12px;
-        min-height: 120px;
-        max-height: 300px;
+        margin: 0;
+        background: linear-gradient(160deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.92));
+        color: #bae6fd;
+        padding: 0.85rem;
+        border-radius: 14px;
+        min-height: 240px;
+        max-height: 620px;
         overflow: auto;
-        border: 1px solid #1e293b;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
+
       .meta {
-        font-size: 0.85rem;
-        color: #475569;
+        font-size: 0.82rem;
+        color: #bfdbfe;
       }
+
+      .sidebar {
+        display: grid;
+        gap: 0.95rem;
+      }
+
+      .kibana-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.54rem 0.9rem;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.65);
+        color: #e2e8f0;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 120ms ease;
+      }
+
+      .kibana-action:hover {
+        transform: translateY(-1px);
+        border-color: rgba(147, 197, 253, 0.7);
+        background: rgba(30, 41, 59, 0.85);
+      }
+
+      .kibana-action.disabled {
+        opacity: 0.55;
+        pointer-events: none;
+        cursor: not-allowed;
+      }
+
+      .panel {
+        border-radius: 18px;
+        padding: 0.95rem;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.52));
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 18px 40px rgba(2, 6, 23, 0.34);
+      }
+
+      .panel h3 {
+        margin: 0 0 0.65rem;
+        font-size: 0.92rem;
+        color: #e2e8f0;
+      }
+
       a {
         word-break: break-all;
-        color: #2563eb;
+        color: #93c5fd;
+      }
+
+      @media (max-width: 920px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        pre {
+          min-height: 180px;
+          max-height: 280px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
       <header class="hero">
-        <h1>APM Test UI</h1>
+        <h1>APM Flow Console</h1>
         <p class="sub">Choose deployment and language, switch active target, generate traffic, then verify in Kibana.</p>
       </header>
 
-      <main class="steps">
-        <section class="step">
-          <h2><span class="step-num">1</span>Choose deployment</h2>
-          <div class="row">
-            <select id="deploymentSelect" class="wide">
-              <option value="">Loading deployments...</option>
-            </select>
-            <button id="refreshDeployments">Refresh</button>
-          </div>
-          <div class="row"><span class="pill" id="deploymentMeta">Not selected</span></div>
-        </section>
+      <div class="layout">
+        <main class="steps">
+          <section class="step">
+            <h2><span class="step-num">1</span>Choose deployment</h2>
+            <div class="row">
+              <select id="deploymentSelect" class="wide">
+                <option value="">Loading deployments...</option>
+              </select>
+              <button id="refreshDeployments">Refresh</button>
+            </div>
+            <div class="row"><span class="pill" id="deploymentMeta">Not selected</span></div>
+          </section>
 
-        <section class="step">
-          <h2><span class="step-num">2</span>Choose language</h2>
-          <div class="row">
-            <select id="languageSelect">
-              <option value="java">java</option>
-              <option value="go">go</option>
-              <option value="python">python</option>
-              <option value="js" selected>js</option>
-            </select>
-            <label for="count" class="meta">Requests</label>
-            <input id="count" type="number" value="20" min="1" max="1000" />
-          </div>
-          <div class="row"><span class="pill" id="expectedServiceName">service=(select deployment + language)</span></div>
-        </section>
+          <section class="step">
+            <h2><span class="step-num">2</span>Choose language</h2>
+            <div class="row">
+              <select id="languageSelect">
+                <option value="java">java</option>
+                <option value="go">go</option>
+                <option value="python">python</option>
+                <option value="js" selected>js</option>
+              </select>
+              <label for="count" class="meta">Requests</label>
+              <input id="count" type="number" value="20" min="1" max="1000" />
+            </div>
+            <div class="row"><span class="pill" id="expectedServiceName">service=(select deployment + language)</span></div>
+          </section>
 
-        <section class="step">
-          <h2><span class="step-num">3</span>Start traffic</h2>
-          <div class="row">
-            <button id="activateTarget">Activate Selected Target</button>
-            <button id="startTraffic" class="primary">Start Traffic</button>
-          </div>
-          <div class="row"><strong>APM URL:</strong> <span id="apmUrl">-</span></div>
-          <div class="row"><strong>Secret Token:</strong> <span id="secretToken">-</span></div>
-        </section>
+          <section class="step">
+            <h2><span class="step-num">3</span>Start traffic</h2>
+            <div class="row">
+              <button id="startTraffic" class="primary">Start Traffic</button>
+            </div>
+          </section>
 
-        <section class="step">
-          <h2><span class="step-num">4</span>Check Kibana</h2>
-          <div><a id="kibanaLink" href="#" target="_blank" rel="noreferrer">(select deployment first)</a></div>
-        </section>
-      </main>
+          <section class="step">
+            <h2><span class="step-num">4</span>Check Kibana</h2>
+            <div><a id="kibanaLink" class="kibana-action disabled" href="#" target="_blank" rel="noreferrer">Open Kibana APM Service</a></div>
+          </section>
+        </main>
 
-      <pre id="log">Ready.</pre>
+        <aside class="sidebar">
+          <section class="panel">
+            <h3>Activity Log</h3>
+            <pre id="log">Ready.</pre>
+          </section>
+        </aside>
+      </div>
     </div>
 
     <script>
@@ -192,12 +340,9 @@
       const refreshDeploymentsButton = document.getElementById("refreshDeployments");
       const languageSelect = document.getElementById("languageSelect");
       const countInput = document.getElementById("count");
-      const activateTargetButton = document.getElementById("activateTarget");
       const startTrafficButton = document.getElementById("startTraffic");
       const deploymentMetaEl = document.getElementById("deploymentMeta");
       const expectedServiceNameEl = document.getElementById("expectedServiceName");
-      const apmUrlEl = document.getElementById("apmUrl");
-      const secretTokenEl = document.getElementById("secretToken");
       const kibanaLinkEl = document.getElementById("kibanaLink");
       const logEl = document.getElementById("log");
       let runtimeInfo = null;
@@ -232,7 +377,7 @@
 
       const refreshKibanaLink = () => {
         if (!selectedTarget?.kibanaApmServicesUrl) {
-          kibanaLinkEl.textContent = "(select deployment first)";
+          kibanaLinkEl.classList.add("disabled");
           kibanaLinkEl.href = "#";
           return;
         }
@@ -240,7 +385,7 @@
         const serviceName = computeExpectedServiceName() || runtimeInfo?.serviceName || "";
         const servicePath = serviceName ? `/${encodeURIComponent(serviceName)}` : "";
         const url = `${selectedTarget.kibanaApmServicesUrl}${servicePath}`;
-        kibanaLinkEl.textContent = url;
+        kibanaLinkEl.classList.remove("disabled");
         kibanaLinkEl.href = url;
       };
 
@@ -362,9 +507,7 @@
         if (!deploymentId) {
           selectedTarget = null;
           deploymentMetaEl.textContent = "Not selected";
-          apmUrlEl.textContent = "-";
-          secretTokenEl.textContent = "-";
-          kibanaLinkEl.textContent = "(select deployment first)";
+          kibanaLinkEl.classList.add("disabled");
           kibanaLinkEl.href = "#";
           return;
         }
@@ -372,8 +515,6 @@
         const body = await cloudGet(`/cloud/deployments/${encodeURIComponent(deploymentId)}/apm-target`);
         selectedTarget = body.target;
         deploymentMetaEl.textContent = `${selectedTarget.deploymentName || "deployment"} (${selectedTarget.deploymentId})`;
-        apmUrlEl.textContent = selectedTarget.apmServerUrl || "-";
-        secretTokenEl.textContent = selectedTarget.secretToken || "-";
         refreshKibanaLink();
         refreshExpectedServiceName();
       };
@@ -397,6 +538,8 @@
           await loadSelectedTarget();
           if (selectedTarget) {
             append(`✔ Selected deployment: ${selectedTarget.deploymentName || selectedTarget.deploymentId}`);
+            append("Auto-activating selected target...");
+            await activateCurrentSelection();
           }
         } catch (error) {
           append(`✖ Deployment load error: ${error.message}`);
@@ -436,22 +579,6 @@
           append(`✔ Traffic done: count=${body.count}, durationMs=${body.durationMs}, language=${body.language}`);
         } catch (error) {
           append(`✖ Start traffic error: ${error.message}`);
-        } finally {
-          setBusy(false);
-        }
-      });
-
-      activateTargetButton.addEventListener("click", async () => {
-        if (!selectedTarget?.deploymentId) {
-          append("✖ Select deployment first");
-          return;
-        }
-
-        setBusy(true);
-        try {
-          await activateCurrentSelection();
-        } catch (error) {
-          append(`✖ Activate target error: ${error.message}`);
         } finally {
           setBusy(false);
         }
