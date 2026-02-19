@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>APM Test UI</title>
+    <style>
+      body {
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 0;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .container {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 2.5rem;
+      }
+      .hero {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem 1.3rem;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        margin: 0 0 0.4rem;
+        font-size: 1.55rem;
+      }
+      .sub {
+        color: #cbd5e1;
+        margin: 0;
+        font-size: 0.95rem;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+      }
+      .step {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+      }
+      .step h2 {
+        margin: 0;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+      .step-num {
+        display: inline-flex;
+        width: 1.45rem;
+        height: 1.45rem;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-weight: 700;
+        font-size: 0.8rem;
+      }
+      .row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+      }
+      input,
+      select {
+        padding: 0.5rem 0.6rem;
+        min-width: 150px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+        color: #0f172a;
+      }
+      .wide {
+        width: 100%;
+      }
+      .pill {
+        display: inline-block;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        padding: 0.28rem 0.75rem;
+        font-size: 0.85rem;
+        background: #eff6ff;
+        color: #1e3a8a;
+      }
+      button {
+        padding: 0.52rem 0.9rem;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #f1f5f9;
+      }
+      button.primary {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #1e40af;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      pre {
+        background: #0f172a;
+        color: #dbeafe;
+        padding: 0.75rem;
+        border-radius: 12px;
+        min-height: 120px;
+        max-height: 300px;
+        overflow: auto;
+        border: 1px solid #1e293b;
+      }
+      .meta {
+        font-size: 0.85rem;
+        color: #475569;
+      }
+      a {
+        word-break: break-all;
+        color: #2563eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="hero">
+        <h1>APM Test UI</h1>
+        <p class="sub">Choose deployment and language, switch active target, generate traffic, then verify in Kibana.</p>
+      </header>
+
+      <main class="steps">
+        <section class="step">
+          <h2><span class="step-num">1</span>Choose deployment</h2>
+          <div class="row">
+            <select id="deploymentSelect" class="wide">
+              <option value="">Loading deployments...</option>
+            </select>
+            <button id="refreshDeployments">Refresh</button>
+          </div>
+          <div class="row"><span class="pill" id="deploymentMeta">Not selected</span></div>
+        </section>
+
+        <section class="step">
+          <h2><span class="step-num">2</span>Choose language</h2>
+          <div class="row">
+            <select id="languageSelect">
+              <option value="java">java</option>
+              <option value="go">go</option>
+              <option value="js" selected>js</option>
+            </select>
+            <label for="count" class="meta">Requests</label>
+            <input id="count" type="number" value="20" min="1" max="1000" />
+          </div>
+          <div class="row"><span class="pill" id="expectedServiceName">service=(select deployment + language)</span></div>
+        </section>
+
+        <section class="step">
+          <h2><span class="step-num">3</span>Start traffic</h2>
+          <div class="row">
+            <button id="activateTarget">Activate Selected Target</button>
+            <button id="startTraffic" class="primary">Start Traffic</button>
+          </div>
+          <div class="row"><strong>APM URL:</strong> <span id="apmUrl">-</span></div>
+          <div class="row"><strong>Secret Token:</strong> <span id="secretToken">-</span></div>
+        </section>
+
+        <section class="step">
+          <h2><span class="step-num">4</span>Check Kibana</h2>
+          <div><a id="kibanaLink" href="#" target="_blank" rel="noreferrer">(select deployment first)</a></div>
+        </section>
+      </main>
+
+      <pre id="log">Ready.</pre>
+    </div>
+
+    <script>
+      const deploymentSelect = document.getElementById("deploymentSelect");
+      const refreshDeploymentsButton = document.getElementById("refreshDeployments");
+      const languageSelect = document.getElementById("languageSelect");
+      const countInput = document.getElementById("count");
+      const activateTargetButton = document.getElementById("activateTarget");
+      const startTrafficButton = document.getElementById("startTraffic");
+      const deploymentMetaEl = document.getElementById("deploymentMeta");
+      const expectedServiceNameEl = document.getElementById("expectedServiceName");
+      const apmUrlEl = document.getElementById("apmUrl");
+      const secretTokenEl = document.getElementById("secretToken");
+      const kibanaLinkEl = document.getElementById("kibanaLink");
+      const logEl = document.getElementById("log");
+      let runtimeInfo = null;
+      let selectedTarget = null;
+
+      const append = (line) => {
+        logEl.textContent += `\n${line}`;
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const setBusy = (busy) => {
+        const buttons = document.querySelectorAll("button");
+        buttons.forEach((button) => {
+          button.disabled = busy;
+        });
+      };
+
+      const computeExpectedServiceName = () => {
+        const deploymentName = selectedTarget?.deploymentName || "";
+        const language = languageSelect.value || "js";
+        if (!deploymentName) return "";
+        return `${deploymentName}-${language}`;
+      };
+
+      const refreshExpectedServiceName = () => {
+        const expected = computeExpectedServiceName();
+        expectedServiceNameEl.textContent = expected
+          ? `service=${expected}`
+          : "service=(select deployment + language)";
+        refreshKibanaLink();
+      };
+
+      const refreshKibanaLink = () => {
+        if (!selectedTarget?.kibanaApmServicesUrl) {
+          kibanaLinkEl.textContent = "(select deployment first)";
+          kibanaLinkEl.href = "#";
+          return;
+        }
+
+        const serviceName = computeExpectedServiceName() || runtimeInfo?.serviceName || "";
+        const servicePath = serviceName ? `/${encodeURIComponent(serviceName)}` : "";
+        const url = `${selectedTarget.kibanaApmServicesUrl}${servicePath}`;
+        kibanaLinkEl.textContent = url;
+        kibanaLinkEl.href = url;
+      };
+
+      const loadInfo = async () => {
+        const response = await fetch("/info");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        runtimeInfo = await response.json();
+        refreshExpectedServiceName();
+      };
+
+      const setDeploymentOptions = (deployments) => {
+        deploymentSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = deployments.length ? "(select deployment)" : "(no deployments found)";
+        deploymentSelect.appendChild(placeholder);
+
+        for (const deployment of deployments) {
+          const option = document.createElement("option");
+          option.value = deployment.id;
+          option.textContent = `${deployment.name || "unnamed"} (${deployment.shortId || deployment.id}) ${deployment.healthy === false ? "- unhealthy" : ""}`;
+          deploymentSelect.appendChild(option);
+        }
+      };
+
+      const cloudGet = async (path) => {
+        const response = await fetch(path);
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(body.message || `HTTP ${response.status}`);
+        }
+        return body;
+      };
+
+      const activateCurrentSelection = async () => {
+        if (!selectedTarget?.deploymentId) {
+          throw new Error("Select deployment first");
+        }
+
+        const computedServiceName = computeExpectedServiceName();
+        if (!computedServiceName) {
+          throw new Error("Unable to compute service name from selected deployment/language");
+        }
+
+        append(`Activating target for ${selectedTarget.deploymentName || selectedTarget.deploymentId}...`);
+        const response = await fetch("/apm/activate-target", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            serverUrl: selectedTarget.apmServerUrl,
+            secretToken: selectedTarget.secretToken,
+            deploymentId: selectedTarget.deploymentId,
+            deploymentName: selectedTarget.deploymentName,
+            kibanaApmServicesUrl: selectedTarget.kibanaApmServicesUrl,
+            serviceName: computedServiceName,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.message || `HTTP ${response.status}`);
+
+        append("Target saved. Waiting for app restart...");
+        await waitForAppReady();
+        await loadInfo();
+        await loadSelectedTarget();
+        append("✔ Active APM target switched and app restarted");
+      };
+
+      const waitForAppReady = async () => {
+        let consecutiveSuccess = 0;
+        for (let i = 0; i < 30; i++) {
+          try {
+            const response = await fetch(`/health?t=${Date.now()}`, { cache: "no-store" });
+            if (response.ok) {
+              consecutiveSuccess += 1;
+              if (consecutiveSuccess >= 2) return;
+            } else {
+              consecutiveSuccess = 0;
+            }
+          } catch {
+            consecutiveSuccess = 0;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
+        throw new Error("App did not come back after restart");
+      };
+
+      const postTrafficWithRetry = async (payload) => {
+        let lastError;
+        for (let attempt = 1; attempt <= 6; attempt++) {
+          try {
+            const response = await fetch("/work/batch", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+          } catch (error) {
+            lastError = error;
+            if (attempt < 6) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+          }
+        }
+        throw lastError || new Error("Failed to send traffic request");
+      };
+
+      const loadDeployments = async () => {
+        const body = await cloudGet("/cloud/list-deployments");
+        const deployments = Array.isArray(body.deployments) ? body.deployments : [];
+        setDeploymentOptions(deployments);
+        return deployments;
+      };
+
+      const loadSelectedTarget = async () => {
+        const deploymentId = deploymentSelect.value;
+        if (!deploymentId) {
+          selectedTarget = null;
+          deploymentMetaEl.textContent = "Not selected";
+          apmUrlEl.textContent = "-";
+          secretTokenEl.textContent = "-";
+          kibanaLinkEl.textContent = "(select deployment first)";
+          kibanaLinkEl.href = "#";
+          return;
+        }
+
+        const body = await cloudGet(`/cloud/deployments/${encodeURIComponent(deploymentId)}/apm-target`);
+        selectedTarget = body.target;
+        deploymentMetaEl.textContent = `${selectedTarget.deploymentName || "deployment"} (${selectedTarget.deploymentId})`;
+        apmUrlEl.textContent = selectedTarget.apmServerUrl || "-";
+        secretTokenEl.textContent = selectedTarget.secretToken || "-";
+        refreshKibanaLink();
+        refreshExpectedServiceName();
+      };
+
+      refreshDeploymentsButton.addEventListener("click", async () => {
+        setBusy(true);
+        try {
+          const deployments = await loadDeployments();
+          append(`✔ Loaded ${deployments.length} deployment(s)`);
+          await loadSelectedTarget();
+        } catch (error) {
+          append(`✖ Refresh deployments error: ${error.message}`);
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      deploymentSelect.addEventListener("change", async () => {
+        setBusy(true);
+        try {
+          await loadSelectedTarget();
+          if (selectedTarget) {
+            append(`✔ Selected deployment: ${selectedTarget.deploymentName || selectedTarget.deploymentId}`);
+          }
+        } catch (error) {
+          append(`✖ Deployment load error: ${error.message}`);
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      languageSelect.addEventListener("change", () => {
+        refreshExpectedServiceName();
+      });
+
+      startTrafficButton.addEventListener("click", async () => {
+        if (!selectedTarget?.deploymentId) {
+          append("✖ Select deployment first");
+          return;
+        }
+
+        const language = languageSelect.value;
+        const count = Number(countInput.value || 1);
+        setBusy(true);
+        try {
+          const expectedServiceName = computeExpectedServiceName();
+          if (runtimeInfo?.serviceName !== expectedServiceName) {
+            append(
+              `Service mismatch detected (active=${runtimeInfo?.serviceName || "unknown"}, expected=${expectedServiceName}). Auto-switching target...`
+            );
+            await activateCurrentSelection();
+          }
+
+          append(`Starting traffic: deployment=${selectedTarget.deploymentId}, language=${language}, count=${count}`);
+          const body = await postTrafficWithRetry({
+            count,
+            language,
+            deploymentId: selectedTarget.deploymentId,
+          });
+          append(`✔ Traffic done: count=${body.count}, durationMs=${body.durationMs}, language=${body.language}`);
+        } catch (error) {
+          append(`✖ Start traffic error: ${error.message}`);
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      activateTargetButton.addEventListener("click", async () => {
+        if (!selectedTarget?.deploymentId) {
+          append("✖ Select deployment first");
+          return;
+        }
+
+        setBusy(true);
+        try {
+          await activateCurrentSelection();
+        } catch (error) {
+          append(`✖ Activate target error: ${error.message}`);
+        } finally {
+          setBusy(false);
+        }
+      });
+
+      (async () => {
+        try {
+          await loadInfo();
+          const deployments = await loadDeployments();
+          if (deployments.length > 0) {
+            deploymentSelect.value = deployments[0].id;
+            await loadSelectedTarget();
+          }
+          append("UI ready");
+        } catch (error) {
+          append(`✖ Startup error: ${error.message}`);
+        }
+      })();
+    </script>
+  </body>
+</html>
