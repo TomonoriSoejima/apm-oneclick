@@ -16,8 +16,10 @@ services:
       - ELASTIC_CLOUD_AUTH_SCHEME=${ELASTIC_CLOUD_AUTH_SCHEME:-ApiKey}
       - ELASTIC_CLOUD_API_KEY=${ELASTIC_CLOUD_API_KEY:-}
       - PYTHON_WORKER_URL=http://python-worker:3001
+      - JAVA_WORKER_URL=http://java-worker:3002
     depends_on:
       - python-worker
+      - java-worker
     volumes:
       - apm-target-state:/shared
     ports:
@@ -34,6 +36,20 @@ services:
       - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-python-demo}
       - ELASTIC_APM_ENVIRONMENT=${ELASTIC_APM_ENVIRONMENT:-repro}
       - ELASTIC_APM_LOG_LEVEL=${ELASTIC_APM_LOG_LEVEL:-info}
+      - ELASTIC_APM_TARGET_OVERRIDE_PATH=/shared/apm-target.override.json
+    volumes:
+      - apm-target-state:/shared
+
+  java-worker:
+    build:
+      context: ./java_app
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=3002
+      - ELASTIC_APM_SERVER_URL=${ELASTIC_APM_SERVER_URL}
+      - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-java-demo}
+      - ELASTIC_APM_ENVIRONMENT=${ELASTIC_APM_ENVIRONMENT:-repro}
       - ELASTIC_APM_TARGET_OVERRIDE_PATH=/shared/apm-target.override.json
     volumes:
       - apm-target-state:/shared

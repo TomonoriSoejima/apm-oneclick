@@ -50,6 +50,7 @@ const cloudApiPrefix = process.env.ELASTIC_CLOUD_API_PREFIX || "/api/v1";
 const cloudAuthScheme = process.env.ELASTIC_CLOUD_AUTH_SCHEME || "ApiKey";
 const configuredKibanaUrl = process.env.ELASTIC_APM_KIBANA_URL || "";
 const pythonWorkerBaseUrl = process.env.PYTHON_WORKER_URL || "http://python-worker:3001";
+const javaWorkerBaseUrl = process.env.JAVA_WORKER_URL || "http://java-worker:3002";
 
 app.use(express.static("public"));
 app.use(express.json());
@@ -248,6 +249,13 @@ app.post("/apm/activate-target", (req, res) => {
       // best-effort
     });
 
+    fetch(`${javaWorkerBaseUrl}/internal/restart`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }).catch(() => {
+      // best-effort
+    });
+
     res.json({ ok: true, message: "APM target activated. Restarting app to apply new destination..." });
 
     setTimeout(() => {
@@ -416,6 +424,18 @@ app.get("/work", async (_req, res) => {
     }
   }
 
+  if (language === "java") {
+    try {
+      const result = await fetch(
+        `${javaWorkerBaseUrl}/work?language=${encodeURIComponent(language)}&deploymentId=${encodeURIComponent(deploymentId)}`
+      );
+      const body = await result.json();
+      return res.status(result.status).json(body);
+    } catch (error) {
+      return res.status(502).json({ ok: false, message: "Java worker unavailable", details: error.message });
+    }
+  }
+
   apm.setLabel("test_language", language);
   if (deploymentId) apm.setLabel("test_deployment_id", deploymentId);
 
@@ -442,6 +462,23 @@ app.post("/work/batch", async (req, res) => {
       return res.status(error.statusCode || 502).json({
         ok: false,
         message: "Python worker batch failed",
+        details: error.payload || error.message,
+      });
+    }
+  }
+
+  if (language === "java") {
+    try {
+      const body = await postJson(`${javaWorkerBaseUrl}/work/batch`, {
+        count,
+        language,
+        deploymentId,
+      });
+      return res.json(body);
+    } catch (error) {
+      return res.status(error.statusCode || 502).json({
+        ok: false,
+        message: "Java worker batch failed",
         details: error.payload || error.message,
       });
     }
