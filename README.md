@@ -9,7 +9,7 @@ Steps:
 3. Open http://localhost:3000 to use the UI for:
    1. choose deployment
    2. choose language (`java`, `go`, `python`, `js`)
-   3. click **Activate Selected Target** to switch APM destination, then start traffic
+   3. deployment auto-activates in the background, then start traffic
    4. open Kibana link to check APM data
 
 Service name is dynamic when activating target:
@@ -17,7 +17,9 @@ Service name is dynamic when activating target:
 
 Runtime behavior on this branch:
 - `python` traffic is routed to `python-worker`.
-- Other languages run on the Node service.
+- `java` traffic is routed to `java-worker`.
+- `go` traffic is routed to `go-worker`.
+- `js` traffic runs on the Node service.
 
 Elastic Cloud API (dynamic extraction):
 - The UI dynamically fetches deployments (`/cloud/list-deployments`) and selected deployment target config (`/cloud/deployments/:deploymentId/apm-target`).

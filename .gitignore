@@ -3,3 +3,5 @@
 node_modules/
 app/node_modules/
 *.log
+go_app/.gomodcache/
+go_app/.gocache/
