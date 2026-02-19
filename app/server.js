@@ -49,6 +49,7 @@ const cloudApiBaseUrl =
 const cloudApiPrefix = process.env.ELASTIC_CLOUD_API_PREFIX || "/api/v1";
 const cloudAuthScheme = process.env.ELASTIC_CLOUD_AUTH_SCHEME || "ApiKey";
 const configuredKibanaUrl = process.env.ELASTIC_APM_KIBANA_URL || "";
+const pythonWorkerBaseUrl = process.env.PYTHON_WORKER_URL || "http://python-worker:3001";
 
 app.use(express.static("public"));
 app.use(express.json());
@@ -58,6 +59,28 @@ const runWork = async () => {
   for (let i = 0; i < 2000000; i++) x += i % 7;
   await new Promise((r) => setTimeout(r, 80));
   return x;
+};
+
+const postJson = async (url, payload) => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
+  if (!response.ok) {
+    const error = new Error(`HTTP ${response.status}`);
+    error.statusCode = response.status;
+    error.payload = body;
+    throw error;
+  }
+  return body;
 };
 
 const toCloudUrl = (path) => {
@@ -218,6 +241,13 @@ app.post("/apm/activate-target", (req, res) => {
       activatedAt: new Date().toISOString(),
     });
 
+    fetch(`${pythonWorkerBaseUrl}/internal/restart`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }).catch(() => {
+      // best-effort
+    });
+
     res.json({ ok: true, message: "APM target activated. Restarting app to apply new destination..." });
 
     setTimeout(() => {
@@ -374,6 +404,18 @@ app.get("/work", async (_req, res) => {
   const language = String(_req.query.language || "js");
   const deploymentId = String(_req.query.deploymentId || "");
 
+  if (language === "python") {
+    try {
+      const result = await fetch(
+        `${pythonWorkerBaseUrl}/work?language=${encodeURIComponent(language)}&deploymentId=${encodeURIComponent(deploymentId)}`
+      );
+      const body = await result.json();
+      return res.status(result.status).json(body);
+    } catch (error) {
+      return res.status(502).json({ ok: false, message: "Python worker unavailable", details: error.message });
+    }
+  }
+
   apm.setLabel("test_language", language);
   if (deploymentId) apm.setLabel("test_deployment_id", deploymentId);
 
@@ -387,6 +429,23 @@ app.post("/work/batch", async (req, res) => {
   const count = Math.min(Math.max(requestedCount, 1), 1000);
   const language = String(req.body?.language || "js");
   const deploymentId = String(req.body?.deploymentId || "");
+
+  if (language === "python") {
+    try {
+      const body = await postJson(`${pythonWorkerBaseUrl}/work/batch`, {
+        count,
+        language,
+        deploymentId,
+      });
+      return res.json(body);
+    } catch (error) {
+      return res.status(error.statusCode || 502).json({
+        ok: false,
+        message: "Python worker batch failed",
+        details: error.payload || error.message,
+      });
+    }
+  }
 
   apm.setLabel("test_language", language);
   if (deploymentId) apm.setLabel("test_deployment_id", deploymentId);

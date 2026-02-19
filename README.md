@@ -8,12 +8,16 @@ Steps:
    docker compose up --build
 3. Open http://localhost:3000 to use the UI for:
    1. choose deployment
-   2. choose language (`java`, `go`, `js`)
+   2. choose language (`java`, `go`, `python`, `js`)
    3. click **Activate Selected Target** to switch APM destination, then start traffic
    4. open Kibana link to check APM data
 
 Service name is dynamic when activating target:
 - `serviceName = <deployment-name>-<language>`
+
+Runtime behavior on this branch:
+- `python` traffic is routed to `python-worker`.
+- Other languages run on the Node service.
 
 Elastic Cloud API (dynamic extraction):
 - The UI dynamically fetches deployments (`/cloud/list-deployments`) and selected deployment target config (`/cloud/deployments/:deploymentId/apm-target`).

@@ -9,10 +9,34 @@ services:
       - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-demo-node}
       - ELASTIC_APM_ENVIRONMENT=${ELASTIC_APM_ENVIRONMENT:-repro}
       - ELASTIC_APM_LOG_LEVEL=${ELASTIC_APM_LOG_LEVEL:-info}
+      - ELASTIC_APM_TARGET_OVERRIDE_PATH=/shared/apm-target.override.json
       - ELASTIC_APM_KIBANA_URL=${ELASTIC_APM_KIBANA_URL:-}
       - ELASTIC_CLOUD_API_BASE_URL=${ELASTIC_CLOUD_API_BASE_URL:-https://api.elastic-cloud.com}
       - ELASTIC_CLOUD_API_PREFIX=${ELASTIC_CLOUD_API_PREFIX:-/api/v1}
       - ELASTIC_CLOUD_AUTH_SCHEME=${ELASTIC_CLOUD_AUTH_SCHEME:-ApiKey}
       - ELASTIC_CLOUD_API_KEY=${ELASTIC_CLOUD_API_KEY:-}
+      - PYTHON_WORKER_URL=http://python-worker:3001
+    depends_on:
+      - python-worker
+    volumes:
+      - apm-target-state:/shared
     ports:
       - "3000:3000"
+
+  python-worker:
+    build:
+      context: ./python_app
+    restart: unless-stopped
+    environment:
+      - PORT=3001
+      - ELASTIC_APM_SERVER_URL=${ELASTIC_APM_SERVER_URL}
+      - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-python-demo}
+      - ELASTIC_APM_ENVIRONMENT=${ELASTIC_APM_ENVIRONMENT:-repro}
+      - ELASTIC_APM_LOG_LEVEL=${ELASTIC_APM_LOG_LEVEL:-info}
+      - ELASTIC_APM_TARGET_OVERRIDE_PATH=/shared/apm-target.override.json
+    volumes:
+      - apm-target-state:/shared
+
+volumes:
+  apm-target-state:
