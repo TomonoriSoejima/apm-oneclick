@@ -156,10 +156,24 @@ const findApmRefId = (deployment) => {
   return "main-apm";
 };
 
+const getDeploymentVersion = (deployment) => {
+  const esResources = deployment?.resources?.elasticsearch;
+  if (Array.isArray(esResources) && esResources.length > 0) {
+    const info = esResources[0]?.info || {};
+    return (
+      info.service_version ||
+      info.plan_info?.current?.plan?.elasticsearch?.version ||
+      ""
+    );
+  }
+  return "";
+};
+
 const serializeDeployment = (deployment) => ({
   id: getDeploymentId(deployment),
   shortId: String(getDeploymentId(deployment) || "").slice(0, 6),
   name: deployment?.name || deployment?.alias || "",
+  version: getDeploymentVersion(deployment),
   healthy: deployment?.healthy,
   resources: {
     hasElasticsearch: Boolean(deployment?.resources?.elasticsearch?.length),
@@ -172,6 +186,7 @@ const serializeDeployment = (deployment) => ({
 const extractApmTarget = (deploymentPayload) => {
   const deployment = deploymentPayload?.resources ? deploymentPayload : deploymentPayload?.deployment;
   if (!deployment) return null;
+
 
   const integration = deployment?.resources?.integrations_server?.[0];
   const integrationInfo = integration?.info || {};
@@ -194,6 +209,7 @@ const extractApmTarget = (deploymentPayload) => {
   return {
     deploymentId: getDeploymentId(deployment),
     deploymentName: deployment?.name || "",
+    version: getDeploymentVersion(deployment),
     apmServerUrl: apmServiceUrl,
     secretToken,
     kibanaApmServicesUrl,

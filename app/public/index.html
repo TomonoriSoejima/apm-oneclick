@@ -406,7 +406,8 @@
         for (const deployment of deployments) {
           const option = document.createElement("option");
           option.value = deployment.id;
-          option.textContent = `${deployment.name || "unnamed"} (${deployment.shortId || deployment.id}) ${deployment.healthy === false ? "- unhealthy" : ""}`;
+          const versionTag = deployment.version ? ` v${deployment.version}` : "";
+          option.textContent = `${deployment.name || "unnamed"} (${deployment.shortId || deployment.id})${versionTag}${deployment.healthy === false ? " - unhealthy" : ""}`;
           deploymentSelect.appendChild(option);
         }
       };
@@ -499,6 +500,21 @@
         const body = await cloudGet("/cloud/list-deployments");
         const deployments = Array.isArray(body.deployments) ? body.deployments : [];
         setDeploymentOptions(deployments);
+
+        // Eagerly backfill versions for all deployments in parallel
+        deployments.forEach((deployment) => {
+          cloudGet(`/cloud/deployments/${encodeURIComponent(deployment.id)}/apm-target`)
+            .then((targetBody) => {
+              const version = targetBody?.target?.version;
+              if (!version) return;
+              const option = deploymentSelect.querySelector(`option[value="${CSS.escape(deployment.id)}"]`);
+              if (option && !option.textContent.includes(` v${version}`)) {
+                option.textContent = option.textContent.trimEnd() + ` v${version}`;
+              }
+            })
+            .catch(() => {});
+        });
+
         return deployments;
       };
 
@@ -515,6 +531,15 @@
         const body = await cloudGet(`/cloud/deployments/${encodeURIComponent(deploymentId)}/apm-target`);
         selectedTarget = body.target;
         deploymentMetaEl.textContent = `${selectedTarget.deploymentName || "deployment"} (${selectedTarget.deploymentId})`;
+
+        // Backfill version into the dropdown option once we have the full deployment detail
+        if (selectedTarget.version) {
+          const selectedOption = deploymentSelect.querySelector(`option[value="${CSS.escape(deploymentId)}"]`);
+          if (selectedOption && !selectedOption.textContent.includes(` v${selectedTarget.version}`)) {
+            selectedOption.textContent = selectedOption.textContent.trimEnd() + ` v${selectedTarget.version}`;
+          }
+        }
+
         refreshKibanaLink();
         refreshExpectedServiceName();
       };
