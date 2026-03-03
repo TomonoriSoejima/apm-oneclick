@@ -12,6 +12,9 @@ Steps:
    3. deployment auto-activates in the background, then start traffic
    4. open Kibana link to check APM data
 
+
+<img width="1125" height="730" alt="image" src="https://github.com/user-attachments/assets/a8db2f2f-ba1b-4f72-81e5-d286b6e1b1d8" />
+
 Runtime behavior on this branch:
 - `python` traffic is routed to `python-worker`.
 - `java` traffic is routed to `java-worker`.
